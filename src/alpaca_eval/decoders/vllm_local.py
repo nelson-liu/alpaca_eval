@@ -38,17 +38,15 @@ def vllm_local_completions(
         Batch size to use for decoding. This currently does not work well with to_bettertransformer.
 
     model_kwargs : dict, optional
-        Additional kwargs to pass to from_pretrained.
+        Additional kwargs to pass to `vllm.LLM` constructor.
 
     kwargs :
         Additional kwargs to SamplingParams
     """
     global llm, llmModelName
-    tp = 1
-    if "tp" in model_kwargs:
-        tp = model_kwargs["tp"]
-    tokenizer_mode = model_kwargs.get("tokenizer_mode", "auto")
-    trust_remote_code = model_kwargs.get("trust_remote_code", False)
+    tp = model_kwargs.pop("tp", 1)
+    tokenizer_mode = model_kwargs.pop("tokenizer_mode", "auto")
+    trust_remote_code = model_kwargs.pop("trust_remote_code", False)
     if llm is None:
         logging.info("vllm: loading model: %s, tp=%d, trust_remote_code=%d", model_name, tp, trust_remote_code)
         llm = LLM(
@@ -57,6 +55,7 @@ def vllm_local_completions(
             tokenizer_mode=tokenizer_mode,
             tensor_parallel_size=tp,
             trust_remote_code=trust_remote_code,
+            **model_kwargs
         )
         llmModelName = model_name
     if model_name != llmModelName:
